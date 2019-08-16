@@ -12,6 +12,12 @@ Lambda-backed custom resource can be used in this regard however, code logic sho
 
 The "enhanVPCRoutingRedshiftcluster.zip" contains a file named "function.py", that has all the code logic required to invoke DescribeClusters[2] API and ModifyCluster API, with an addition to modules including "cfnrespoonse" and "logging" to log events back to CloudWatch LogGroup.
 
+Considerations:
+---------------
+1. ModifyCluster API will be failed if Redshift Cluster itself is in some other status than "available".
+2. ModifyCluster API for enabling/disabling "Enhanced VPC Routing" will fail if its already enabled/disabled respectively.
+3. Thus, Lambda function code itself should perform "DescribeClusters" API to determine the cluster status and then, depending on the cluster status should proceed with invoking ModifyCluster API.
+
 Steps:
 ------
 1. Please upload this enhanVPCRoutingRedshiftcluster.zip to an S3 bucket and make sure its accessible by CloudFormation.
