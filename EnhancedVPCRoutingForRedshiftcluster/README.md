@@ -37,6 +37,6 @@ Steps:
         ```
 References:
 -----------
-[1] ModifyCluster - https://docs.aws.amazon.com/redshift/latest/APIReference/API_ModifyCluster.html
-[2] DescribeClusters - https://docs.aws.amazon.com/redshift/latest/APIReference/API_DescribeClusters.html
-[3] Amazon Redshift Clusters - Cluster Status - https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-clusters.html#rs-mgmt-cluster-status
+- [1] ModifyCluster - https://docs.aws.amazon.com/redshift/latest/APIReference/API_ModifyCluster.html
+- [2] DescribeClusters - https://docs.aws.amazon.com/redshift/latest/APIReference/API_DescribeClusters.html
+- [3] Amazon Redshift Clusters - Cluster Status - https://docs.aws.amazon.com/redshift/latest/mgmt/working-with-clusters.html#rs-mgmt-cluster-status
