@@ -42,6 +42,7 @@ Steps:
         - I used Python Boto3[4] SDK to write this code.
         - My code has the logic to identify the current status of "Enhanced VPC routing" and will prohibit enabling "EnhancedVpcRouting" in case its already enabled for the Redshift cluster in question and vice versa.
         - Please see the code from function.py file attached.
+
 References:
 -----------
 - [1] ModifyCluster - https://docs.aws.amazon.com/redshift/latest/APIReference/API_ModifyCluster.html
