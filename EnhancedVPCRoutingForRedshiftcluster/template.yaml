@@ -1,0 +1,111 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  ClusterIdentifier:
+    Description: Custom Identifier for Redshift Cluster
+    Default: myRedshiftCluster
+    Type: String
+  ClusterType:
+    Description: The type of the cluster
+    Type: String
+    AllowedValues: ["single-node","multi-node"]
+  DBName:
+    Type: String
+    Description: The name of the first database to be created when the cluster is created. DbName parameter must be lowercase, begin with a letter, contain only alphanumeric characters, underscore ('_'), plus sign ('+'), dot ('.'), at ('@'), or hyphen ('-'), and be less than 64 characters.
+  DBMasterUsername:
+    Type: String
+    Description: The user name associated with the master user account for the cluster that is being created.
+  MasterUserPassword:
+    Type: String
+    Description: The password associated with the master user account for the cluster that is being created. Must be between 8 and 64 characters in length, must contain at least one uppercase letter, must contain at least one lowercase letter, must contain one number and can be any printable ASCII character (ASCII code 33 to 126) except ' (single quote), " (double quote), \, /, @, or space.
+    NoEcho: true
+  NodeType:
+    Description: The node type to be provisioned for the cluster.
+    Type: String
+    AllowedValues: ["ds2.xlarge","ds2.8xlarge","ds2.xlarge","ds2.8xlarge","dc1.large","dc1.8xlarge","dc2.large","dc2.8xlarge"]
+  NumberOfNodes:
+    Description: The number of compute nodes in the cluster.
+    Type: Number
+    Default: 2
+  EnableEnhancedVPCRouting:
+    Description: Enable enhanced VPC Routing for Redshift Cluster
+    Type: String
+    AllowedValues: ["True","False"]
+  S3Bucket:
+    Description: S3 bucket having Lambda Deployment package
+    Type: String
+  S3Key:
+    Description: The name of the Lambda Deployemnt package including extension .zip
+    Type: String
+Resources:
+  RedshiftCluster:
+    Type: AWS::Redshift::Cluster
+    Properties:
+      ClusterIdentifier: !Ref ClusterIdentifier
+      ClusterType: !Ref ClusterType
+      DBName: !Ref DBName
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref MasterUserPassword
+      NodeType: !Ref NodeType
+      NumberOfNodes: !Ref NumberOfNodes
+  LambdaExecutionRole:
+    DependsOn: RedshiftCluster
+    Type: AWS::IAM::Role
+    Properties:
+      Policies:
+        - PolicyName: ApiLambdaPermissions
+          PolicyDocument:
+            Statement:
+              -
+                Action:
+                  - "logs:Describe*"
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Effect: Allow
+                Resource: "*"
+              -
+                Action:
+                  - "redshift:ModifyCluster"           ############ To give lambda function permissions to interact with Redshift Cluster
+                  - "redshift:DescribeClusters"
+                Effect: Allow
+                Resource: !Sub "arn:aws:redshift:${AWS::Region}:${AWS::AccountId}:cluster:${RedshiftCluster}"
+            Version: 2012-10-17
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Action: sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Effect: Allow
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    DependsOn:
+      - LambdaExecutionRole
+      - RedshiftCluster
+    Properties:
+      Runtime: python2.7
+      Handler: function.handler
+      Role:
+        'Fn::GetAtt':
+          - LambdaExecutionRole
+          - Arn
+      Timeout: 300
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref S3Key
+  CustomResource:
+    Type: Custom::MyCustomResource
+    DependsOn:
+      - LambdaFunction
+      - RedshiftCluster
+    Properties:
+      ServiceToken:
+        'Fn::GetAtt':
+          - LambdaFunction
+          - Arn
+      RedshiftClusterIdentifier: !Ref RedshiftCluster
+      EnableEnhancedVPCRouting: !Ref EnableEnhancedVPCRouting
